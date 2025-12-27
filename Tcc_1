@@ -1,0 +1,225 @@
+"""
+================================================================================
+PROJETO FINAL: MOTOR DE CRÉDITO RESPONSÁVEL & PREVENÇÃO AO SUPERENDIVIDAMENTO
+================================================================================
+DESCRIÇÃO: Script de treinamento de Machine Learning.
+
+"""
+
+# ==============================================================================
+# BLOCO 1: IMPORTAÇÃO DAS BIBLIOTECAS (As ferramentas de trabalho)
+# ==============================================================================
+print("--- PREPARANDO O AMBIENTE ---")
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, f1_score
+
+import joblib
+
+
+pd.set_option('display.float_format', lambda x: '%.4f' % x)
+sns.set_style("whitegrid")
+
+# ==============================================================================
+# BLOCO 2: CARREGANDO E LIMPANDO OS DADOS
+# ==============================================================================
+
+try:
+    df = pd.read_csv('cs-training.csv')
+    print(f"Sucesso! Carregamos {df.shape[0]} clientes e {df.shape[1]} colunas.")
+except FileNotFoundError:
+    print("ERRO: Não achei o arquivo 'cs-training.csv'. Verifique a pasta.")
+    exit()
+
+# Removendo colunas inúteis
+if 'Unnamed: 0' in df.columns:
+    df.drop('Unnamed: 0', axis=1, inplace=True)
+
+# Tratando valores nulos
+mediana_renda = df['MonthlyIncome'].median()
+df['MonthlyIncome'].fillna(mediana_renda, inplace=True)
+df['NumberOfDependents'].fillna(0, inplace=True)
+
+# Ajustando DebtRatio
+df['DebtRatio_Clean'] = df['DebtRatio'].apply(lambda x: 2.0 if x > 2.0 else x)
+
+print("Dados limpos: Buracos preenchidos e erros corrigidos.")
+
+# Visualizações exploratórias
+plt.figure(figsize=(8,4))
+sns.histplot(df['MonthlyIncome'], bins=50, kde=True)
+plt.title("Distribuição da Renda Mensal (após imputação)")
+plt.show()
+
+plt.figure(figsize=(8,4))
+sns.boxplot(x=df['DebtRatio_Clean'])
+plt.title("Boxplot do DebtRatio (versão limpa)")
+plt.show()
+
+# ==============================================================================
+# BLOCO 3: DEFININDO AS REGRAS (Lei 14.181)
+# ==============================================================================
+print("\n--- REGRAS DE NEGÓCIO (LEI DO SUPERENDIVIDAMENTO) ---")
+
+LIMIT_GREEN = 0.30
+LIMIT_RED = 0.70
+
+print(f"Limites definidos: Até {LIMIT_GREEN*100}% é saudável. Acima de {LIMIT_RED*100}% é risco legal.")
+
+# ==============================================================================
+# BLOCO 4: ENGENHARIA DE FEATURES 
+# ==============================================================================
+print("\n--- CRIANDO NOVAS VARIÁVEIS ---")
+
+df.rename(columns={'SeriousDlqin2yrs': 'Target_Inadimplencia'}, inplace=True)
+df['Target_Superendividado'] = df['DebtRatio_Clean'].apply(lambda x: 1 if x > LIMIT_RED else 0)
+df['Renda_Per_Capita'] = df['MonthlyIncome'] / (df['NumberOfDependents'] + 1)
+
+col_90 = 'NumberOfTimes90DaysLate' if 'NumberOfTimes90DaysLate' in df.columns else 'NumberOfTime90DaysLate'
+df['Total_Atrasos'] = (df['NumberOfTime30-59DaysPastDueNotWorse'] +
+                       df['NumberOfTime60-89DaysPastDueNotWorse'] +
+                       df[col_90])
+
+df['Uso_Cartao_Critico'] = df['RevolvingUtilizationOfUnsecuredLines'].apply(lambda x: 1 if x >= 1.0 else 0)
+
+print("Novas variáveis criadas com sucesso.")
+
+# Visualizações das novas variáveis
+plt.figure(figsize=(8,4))
+sns.histplot(df['Renda_Per_Capita'], bins=50, kde=True)
+plt.title("Distribuição da Renda Per Capita")
+plt.show()
+
+plt.figure(figsize=(8,4))
+sns.countplot(x=df['Uso_Cartao_Critico'])
+plt.title("Uso Crítico do Cartão (>=100% do limite)")
+plt.show()
+
+# ==============================================================================
+# BLOCO 5: TREINAMENTO 
+# ==============================================================================
+print("\n--- TREINANDO OS MODELOS ---")
+
+features_base = [
+    'RevolvingUtilizationOfUnsecuredLines', 'age', 'NumberOfTime30-59DaysPastDueNotWorse',
+    'MonthlyIncome', 'NumberOfOpenCreditLinesAndLoans', col_90,
+    'NumberRealEstateLoansOrLines', 'NumberOfTime60-89DaysPastDueNotWorse',
+    'NumberOfDependents', 'Renda_Per_Capita', 'Total_Atrasos', 'Uso_Cartao_Critico'
+]
+
+X_A = df[features_base + ['DebtRatio_Clean']]
+X_B = df[features_base]
+
+y_A = df['Target_Inadimplencia']
+y_B = df['Target_Superendividado']
+
+X_train_A, X_test_A, y_train_A, y_test_A = train_test_split(X_A, y_A, test_size=0.3, random_state=42)
+X_train_B, X_test_B, y_train_B, y_test_B = train_test_split(X_B, y_B, test_size=0.3, random_state=42)
+
+print("> Treinando Modelo A (Foco: Calote)...")
+clf_A = RandomForestClassifier(n_estimators=50, max_depth=10, class_weight='balanced', random_state=42)
+clf_A.fit(X_train_A, y_train_A)
+
+print("> Treinando Modelo B (Foco: Superendividamento)...")
+clf_B = RandomForestClassifier(n_estimators=50, max_depth=10, class_weight='balanced', random_state=42)
+clf_B.fit(X_train_B, y_train_B)
+
+nota_A = roc_auc_score(y_test_A, clf_A.predict_proba(X_test_A)[:, 1])
+nota_B = roc_auc_score(y_test_B, clf_B.predict_proba(X_test_B)[:, 1])
+
+print(f"   -> Nota do Modelo A (Calote): {nota_A:.4f}")
+print(f"   -> Nota do Modelo B (ESG):    {nota_B:.4f}")
+
+y_pred_A = clf_A.predict(X_test_A)
+y_pred_B = clf_B.predict(X_test_B)
+
+# Modelo A
+acc_A = accuracy_score(y_test_A, y_pred_A)
+prec_A = precision_score(y_test_A, y_pred_A)
+f1_A = f1_score(y_test_A, y_pred_A)
+
+print("\n--- MÉTRICAS MODELO A (Inadimplência) ---")
+print(f"Acurácia: {acc_A:.4f}")
+print(f"Precisão: {prec_A:.4f}")
+print(f"F1-Score: {f1_A:.4f}")
+
+# Modelo B
+acc_B = accuracy_score(y_test_B, y_pred_B)
+prec_B = precision_score(y_test_B, y_pred_B)
+f1_B = f1_score(y_test_B, y_pred_B)
+
+print("\n--- MÉTRICAS MODELO B (Superendividamento) ---")
+print(f"Acurácia: {acc_B:.4f}")
+print(f"Precisão: {prec_B:.4f}")
+print(f"F1-Score: {f1_B:.4f}")
+
+# ==============================================================================
+# BLOCO 6: VISUALIZAÇÃO DE DESEMPENHO
+# ==============================================================================
+print("\n--- VISUALIZANDO OS ACERTOS E ERROS ---")
+
+def plot_confusion_matrix(y_true, y_pred, title):
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure(figsize=(5, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
+    plt.title(title)
+    plt.ylabel('Realidade')
+    plt.xlabel('Previsão')
+    plt.show()
+
+print("Gerando gráficos...")
+plot_confusion_matrix(y_test_A, clf_A.predict(X_test_A), "Matriz: Inadimplência")
+plot_confusion_matrix(y_test_B, clf_B.predict(X_test_B), "Matriz: Superendividamento")
+
+# Importância das variáveis
+importances_A = pd.Series(clf_A.feature_importances_, index=X_A.columns).sort_values(ascending=False)
+plt.figure(figsize=(10,5))
+sns.barplot(x=importances_A.index, y=importances_A.values)
+plt.title("Importância das Variáveis - Modelo A")
+plt.xticks(rotation=45, ha="right")
+plt.show()
+
+# ==============================================================================
+# BLOCO 7: SALVAR PARA A API
+# ==============================================================================
+print("\n--- SALVANDO ARTEFATOS ---")
+
+artefatos = {
+    # Lista de features efetivamente usadas por cada modelo
+    "features_modelo_A": features_base + ['DebtRatio_Clean'],
+    "features_modelo_B": features_base,
+
+    # Lista de features de entrada esperadas pela API 
+    "input_features": features_base,
+
+    # Regras de imputação usadas na limpeza
+    "valores_imputacao": {
+        "MonthlyIncome": mediana_renda,  # Mediana calculada no treinamento
+        "NumberOfDependents": 0          # Padrão adotado para dependentes ausentes
+    },
+
+    # Limiares de negócio (Lei 14.181) e cortes operacionais para decisão
+    "limites": {
+        "verde": LIMIT_GREEN,
+        "vermelho": LIMIT_RED,
+        "corte_calote": 0.50,  # Se probabilidade de inadimplência > 50%, reprova
+        "corte_esg": 0.50      # Se probabilidade de superendividamento > 50%, alerta
+    },
+
+    # Metadados úteis para rastreabilidade e versionamento
+    "versao_modelo": "1.0_Final",
+    "autor": "Daniel Oliveira"
+}
+
+# Persistência dos artefatos e modelos em disco (.pkl)
+joblib.dump(clf_A, 'modelo_inadimplencia.pkl')
+joblib.dump(clf_B, 'modelo_superendividamento.pkl')
+joblib.dump(artefatos, 'artefatos_projeto.pkl')
+
+print("Análise, processamento e treinamentos bem sucedidos! Artefatos salvos.")
