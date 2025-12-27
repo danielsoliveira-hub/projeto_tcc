@@ -51,8 +51,10 @@ sns.scatterplot(x=df['MonthlyIncome'], y=df['DebtRatio'])
 plt.title("Dispersão: Renda vs DebtRatio")
 plt.show()
 ````
-![alt text](Figure_2-1.png)
-![alt text](Figure_1.png)
+<img width="1000" height="500" alt="Import variavel A" src="https://github.com/user-attachments/assets/e8fe1dc7-a955-41cf-b94f-73e130a691d2" />
+
+<img width="800" height="400" alt="Figure_2" src="https://github.com/user-attachments/assets/84fec6d5-08c2-4675-b1c2-c27a2891f37e" />
+<img width="800" height="400" alt="Renda mensal" src="https://github.com/user-attachments/assets/e8116685-f9e5-4167-b78a-c2c3325af948" />
 
 
 ## 3. Data Preparation (Preparação dos Dados)
@@ -74,7 +76,8 @@ df['Total_Atrasos'] = (df['NumberOfTime30-59DaysPastDueNotWorse'] +
                        df['NumberOfTimes90DaysLate'])
 df['Uso_Cartao_Critico'] = df['RevolvingUtilizationOfUnsecuredLines'].apply(lambda x: 1 if x>=1.0 else 0)
 ````
-![alt text](<Uso cartão.png>)
+<img width="800" height="400" alt="Uso cartão" src="https://github.com/user-attachments/assets/4627ca28-32de-4b3d-81a2-e239baec0803" />
+
 
 ## 4. Modelagem
 
@@ -133,9 +136,8 @@ plot_confusion_matrix(y_test_A, clf_A.predict(X_test_A), "Matriz Inadimplência"
 plot_confusion_matrix(y_test_B, clf_B.predict(X_test_B), "Matriz Superendividamento")
 ````
 
-![alt text](<Matriz de confusão.png>)
-![alt text](<Matriz de confusão superendividamento.png>)
-
+<img width="500" height="400" alt="Matriz de confusão" src="https://github.com/user-attachments/assets/2279b7cd-d7e5-40d5-8406-6907e215a293" />
+<img width="500" height="400" alt="Matriz de confusão superendividamento" src="https://github.com/user-attachments/assets/0fe79aa8-9ffb-4ea0-89fb-d84282150d92" />
 
 
 ## 6. Deployment (Implantação)
@@ -147,5 +149,6 @@ import joblib
 joblib.dump(clf_A,'modelo_inadimplencia.pkl')
 joblib.dump(clf_B,'modelo_superendividamento.pkl')
 ````
-![alt text](image.png)
-![alt text](image-1.png)
+<img width="1843" height="854" alt="Captura de tela 2025-12-27 160859" src="https://github.com/user-attachments/assets/f0696e44-ee4e-4bc0-b629-58738b23bd1f" />
+<img width="469" height="744" alt="Captura de tela 2025-12-27 161820" src="https://github.com/user-attachments/assets/9c2a8590-b7f6-4c8d-80b1-f9d7ad9f3c86" />
+
