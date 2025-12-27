@@ -51,7 +51,6 @@ sns.scatterplot(x=df['MonthlyIncome'], y=df['DebtRatio'])
 plt.title("Dispersão: Renda vs DebtRatio")
 plt.show()
 ````
-<img width="1000" height="500" alt="Import variavel A" src="https://github.com/user-attachments/assets/e8fe1dc7-a955-41cf-b94f-73e130a691d2" />
 
 <img width="800" height="400" alt="Figure_2" src="https://github.com/user-attachments/assets/84fec6d5-08c2-4675-b1c2-c27a2891f37e" />
 <img width="800" height="400" alt="Renda mensal" src="https://github.com/user-attachments/assets/e8116685-f9e5-4167-b78a-c2c3325af948" />
@@ -139,6 +138,7 @@ plot_confusion_matrix(y_test_B, clf_B.predict(X_test_B), "Matriz Superendividame
 <img width="500" height="400" alt="Matriz de confusão" src="https://github.com/user-attachments/assets/2279b7cd-d7e5-40d5-8406-6907e215a293" />
 <img width="500" height="400" alt="Matriz de confusão superendividamento" src="https://github.com/user-attachments/assets/0fe79aa8-9ffb-4ea0-89fb-d84282150d92" />
 
+<img width="1000" height="500" alt="Import variavel A" src="https://github.com/user-attachments/assets/e8fe1dc7-a955-41cf-b94f-73e130a691d2" />
 
 ## 6. Deployment (Implantação)
 - API: FastAPI com endpoint /analisar_credito.
@@ -151,4 +151,5 @@ joblib.dump(clf_B,'modelo_superendividamento.pkl')
 ````
 <img width="1843" height="854" alt="Captura de tela 2025-12-27 160859" src="https://github.com/user-attachments/assets/f0696e44-ee4e-4bc0-b629-58738b23bd1f" />
 <img width="469" height="744" alt="Captura de tela 2025-12-27 161820" src="https://github.com/user-attachments/assets/9c2a8590-b7f6-4c8d-80b1-f9d7ad9f3c86" />
+
 
