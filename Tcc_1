@@ -7,7 +7,7 @@ DESCRIÇÃO: Script de treinamento de Machine Learning.
 """
 
 # ==============================================================================
-# BLOCO 1: IMPORTAÇÃO DAS BIBLIOTECAS (As ferramentas de trabalho)
+# BLOCO 1: IMPORTAÇÃO DAS BIBLIOTECAS 
 # ==============================================================================
 print("--- PREPARANDO O AMBIENTE ---")
 
@@ -223,3 +223,4 @@ joblib.dump(clf_B, 'modelo_superendividamento.pkl')
 joblib.dump(artefatos, 'artefatos_projeto.pkl')
 
 print("Análise, processamento e treinamentos bem sucedidos! Artefatos salvos.")
+
