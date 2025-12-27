@@ -1,0 +1,16 @@
+--- TREINANDO OS MODELOS ---
+> Treinando Modelo A (Foco: Calote)...
+> Treinando Modelo B (Foco: Superendividamento)...
+   -> Nota do Modelo A (Calote): 0.8595
+   -> Nota do Modelo B (ESG):    0.9683
+
+--- MÉTRICAS MODELO A (Inadimplência) ---
+Acurácia: 0.8360
+Precisão: 0.2440
+F1-Score: 0.3623
+
+--- MÉTRICAS MODELO B (Superendividamento) ---
+Acurácia: 0.9161
+Precisão: 0.8323
+F1-Score: 0.8560
+
